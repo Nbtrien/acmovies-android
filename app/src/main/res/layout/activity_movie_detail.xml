@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/background"
+    android:orientation="vertical"
+    tools:context=".MovieDetailActivity">
+
+    <com.google.android.exoplayer2.ui.PlayerView
+        android:id="@+id/plvMovies"
+        android:layout_width="match_parent"
+        android:layout_height="250dp"
+        android:foreground="@drawable/bg_roundrect_ripple_light_border"
+        app:controller_layout_id="@layout/custom_player_control_view"
+        app:fastforward_increment="30000"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:player_layout_id="@layout/exo_player_view"
+        app:resize_mode="fill"
+        app:rewind_increment="30000"
+        app:show_timeout="10000"
+        app:use_controller="true" >
+
+        <com.github.ybq.android.spinkit.SpinKitView
+            xmlns:app="http://schemas.android.com/apk/res-auto"
+            android:id="@+id/progressBar"
+            style="@style/SpinKitView.Large.Circle"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:layout_gravity="center"
+            app:SpinKit_Color="@color/white" />
+    </com.google.android.exoplayer2.ui.PlayerView>
+    
+    <androidx.viewpager.widget.ViewPager
+        android:id="@+id/tab_viewpager"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content">
+    </androidx.viewpager.widget.ViewPager>
+
+</LinearLayout>
