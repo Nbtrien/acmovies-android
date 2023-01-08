@@ -7,6 +7,7 @@ import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -22,6 +23,7 @@ import androidx.fragment.app.Fragment;
 import com.example.acmovies.MainActivity;
 import com.example.acmovies.R;
 import com.example.acmovies.model.Auth;
+import com.example.acmovies.model.AuthWrapper;
 import com.example.acmovies.model.User;
 import com.example.acmovies.retrofit.APIUtils;
 import com.example.acmovies.retrofit.DataClient;
@@ -57,6 +59,8 @@ public class SignInFragment extends Fragment {
         layoutPassword = (TextInputLayout) view.findViewById(R.id.layoutPasswordSignIn);
         txtEmail = (TextInputEditText) view.findViewById(R.id.txtEmailSignIn);
         txtPassword = (TextInputEditText) view.findViewById(R.id.txtPasswordSignIn);
+        txtEmail.setText("trien@gmail.com");
+        txtPassword.setText("123456789");
         txtSignUp = (TextView) view.findViewById(R.id.txtSignUp);
         btnSignIn = (Button) view.findViewById(R.id.btnSignIn);
 
@@ -140,15 +144,15 @@ public class SignInFragment extends Fragment {
         String password = txtPassword.getText().toString();
 
         DataClient dataClient = APIUtils.getData();
-        Call<Auth> authCall = dataClient.Login(email, password);
-        authCall.enqueue(new Callback<Auth>() {
+        Call<AuthWrapper<Auth>> authCall = dataClient.Login(email, password);
+        authCall.enqueue(new Callback<AuthWrapper<Auth>>() {
             @Override
-            public void onResponse(Call<Auth> call, Response<Auth> response) {
+            public void onResponse(Call<AuthWrapper<Auth>> call, Response<AuthWrapper<Auth>> response) {
                 if (response.isSuccessful())
                 {
-                    Auth auth = response.body();
+                    Auth auth = response.body().getData();
                     if (auth.getStatus()) {
-                        String token = auth.getToken();
+                        String token = auth.getAccessToken();
                         User user = auth.getUser();
                         SharedPreferences userPref = getContext().getSharedPreferences("user", Context.MODE_PRIVATE);
                         SharedPreferences.Editor editor = userPref.edit();
@@ -174,7 +178,7 @@ public class SignInFragment extends Fragment {
             }
 
             @Override
-            public void onFailure(Call<Auth> call, Throwable t) {
+            public void onFailure(Call<AuthWrapper<Auth>> call, Throwable t) {
                 Toast.makeText(getContext(), t.toString(), Toast.LENGTH_LONG).show();
             }
         });

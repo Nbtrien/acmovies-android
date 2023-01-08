@@ -3,8 +3,9 @@ package com.example.acmovies.model;
 import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
 
-public class Comment {
+import java.util.List;
 
+public class Comment {
     @SerializedName("id")
     @Expose
     private Integer id;
@@ -16,7 +17,7 @@ public class Comment {
     private Integer movieId;
     @SerializedName("parent_id")
     @Expose
-    private Object parentId;
+    private Integer parentId;
     @SerializedName("content")
     @Expose
     private String content;
@@ -29,64 +30,67 @@ public class Comment {
     @SerializedName("time")
     @Expose
     private String time;
+    @SerializedName("replies")
+    @Expose
+    private List<Comment> replies = null;
     @SerializedName("user")
     @Expose
     private User user;
 
     public Integer getId() {
-    return id;
+        return id;
     }
 
     public void setId(Integer id) {
-    this.id = id;
+        this.id = id;
     }
 
     public Integer getUserId() {
-    return userId;
+        return userId;
     }
 
     public void setUserId(Integer userId) {
-    this.userId = userId;
+        this.userId = userId;
     }
 
     public Integer getMovieId() {
-    return movieId;
+        return movieId;
     }
 
     public void setMovieId(Integer movieId) {
-    this.movieId = movieId;
+        this.movieId = movieId;
     }
 
     public Object getParentId() {
-    return parentId;
+        return parentId;
     }
 
-    public void setParentId(Object parentId) {
-    this.parentId = parentId;
+    public void setParentId(Integer parentId) {
+        this.parentId = parentId;
     }
 
     public String getContent() {
-    return content;
+        return content;
     }
 
     public void setContent(String content) {
-    this.content = content;
+        this.content = content;
     }
 
     public String getCreatedAt() {
-    return createdAt;
+        return createdAt;
     }
 
     public void setCreatedAt(String createdAt) {
-    this.createdAt = createdAt;
+        this.createdAt = createdAt;
     }
 
     public String getUpdatedAt() {
-    return updatedAt;
+        return updatedAt;
     }
 
     public void setUpdatedAt(String updatedAt) {
-    this.updatedAt = updatedAt;
+        this.updatedAt = updatedAt;
     }
 
     public String getTime() {
@@ -97,12 +101,20 @@ public class Comment {
         this.time = time;
     }
 
+    public List<Comment> getReplies() {
+        return replies;
+    }
+
+    public void setReplies(List<Comment> replies) {
+        this.replies = replies;
+    }
+
     public User getUser() {
-    return user;
+        return user;
     }
 
     public void setUser(User user) {
-    this.user = user;
+        this.user = user;
     }
 
 }

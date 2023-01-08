@@ -23,15 +23,18 @@ import com.example.acmovies.R;
 import com.example.acmovies.adapter.ItemRecyclerAdapter;
 import com.example.acmovies.model.Actor;
 import com.example.acmovies.model.Episode;
-import com.example.acmovies.model.Genres;
+import com.example.acmovies.model.Genre;
 import com.example.acmovies.model.Movie;
-import com.example.acmovies.model.Pagination;
+import com.example.acmovies.model.Video;
+import com.example.acmovies.model.WrapperData;
 import com.example.acmovies.retrofit.APIUtils;
 import com.example.acmovies.retrofit.DataClient;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -63,7 +66,7 @@ public class SeriesMoviesFragment extends Fragment implements ItemClickListener 
             }
             itemRecyclerAdapter.notifyDataSetChanged();
         } else {
-            getData();
+            getMovies();
         }
 
         mInstanceAlreadySaved = false;
@@ -90,7 +93,7 @@ public class SeriesMoviesFragment extends Fragment implements ItemClickListener 
                 if(moviesRecycler.canScrollVertically(1)){
                     if (currentPage <= totalAvailablePages){
                         currentPage += 1;
-                        getData();
+                        getMovies();
                     }
                 }
             }
@@ -104,21 +107,28 @@ public class SeriesMoviesFragment extends Fragment implements ItemClickListener 
         mInstanceAlreadySaved = true;
     }
 
-    private void getData() {
+    private void getMovies() {
         toggleLoading();
+        Map<String, String> params = new HashMap<>();
+        params.put("keyword", "releasedate");
+        params.put("limit", "9");
+        params.put("category", category);
+        params.put("page",  Integer.toString(currentPage) );
         DataClient dataClient = APIUtils.getData();
-        Call<Pagination> paginationCall = dataClient.GetMoviesbyCategory(category, currentPage);
-        paginationCall.enqueue(new Callback<Pagination>() {
+        Call<WrapperData<Movie>> moviesCall = dataClient.getMovies(params);
+        moviesCall.enqueue(new Callback<WrapperData<Movie>>() {
             @Override
-            public void onResponse(Call<Pagination> call, Response<Pagination> response) {
+            public void onResponse(Call<WrapperData<Movie>> call, Response<WrapperData<Movie>> response) {
                 if(response.isSuccessful()){
                     toggleLoading();
-                    Pagination pag = response.body();
-                    totalAvailablePages = pag.getLastPage();
-                    for (Movie movie : pag.getMovies()){
+                    ArrayList<Movie> list = (ArrayList<Movie>) response.body().getData();
+
+                    totalAvailablePages = response.body().getMeta().getLastPage();
+                    for (Movie movie : list){
                         movieList.add(movie);
                     }
                     itemRecyclerAdapter.notifyDataSetChanged();
+                    Log.d("paginationseries", response.body().getMeta().toString());
                 } else {
                     Log.d("paginationseries", response.isSuccessful()+"loix");
                     toggleLoading();
@@ -126,10 +136,10 @@ public class SeriesMoviesFragment extends Fragment implements ItemClickListener 
             }
 
             @Override
-            public void onFailure(Call<Pagination> call, Throwable t) {
+            public void onFailure(Call<WrapperData<Movie>> call, Throwable t) {
                 Log.d("paginationseries", t.toString() + "");
                 toggleLoading();
-                getData();
+                getMovies();
             }
         });
     }
@@ -146,36 +156,9 @@ public class SeriesMoviesFragment extends Fragment implements ItemClickListener 
 
     @Override
     public void onMovieClick(Movie movie) {
-        final ProgressDialog progressDialog;
-        progressDialog = new ProgressDialog(getContext());
-        progressDialog.show();
-        progressDialog.setContentView(R.layout.progress_dialog);
-        progressDialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
-        DataClient dataClient = APIUtils.getData();
-
-        new Handler().postDelayed(new Runnable() {
-            @Override
-            public void run() {
-                Call<Movie> callMovie = dataClient.GetMoviebyId(movie.getId());
-                callMovie.enqueue(new Callback<Movie>() {
-                    @Override
-                    public void onResponse(Call<Movie> call, Response<Movie> response) {
-                        Movie movie = response.body();
-                        Intent intent = new Intent(getContext(), MovieDetailActivity.class);
-                        intent.putExtra("movie",movie);
-                        startActivity(intent);
-                        progressDialog.dismiss();
-                    }
-
-                    @Override
-                    public void onFailure(Call<Movie> call, Throwable t) {
-                        progressDialog.dismiss();
-                        Log.d("ERROR: ", t.getMessage().toString());
-                    }
-                });
-            }
-        }, 3000);
+        sendtoMovieDetail(movie.getId());
     }
+
 
     @Override
     public void onEpisodeClick(Episode episode) {
@@ -188,8 +171,54 @@ public class SeriesMoviesFragment extends Fragment implements ItemClickListener 
     }
 
     @Override
-    public void onGenreClick(Genres genres) {
+    public void onGenreClick(Genre genres) {
 
+    }
+
+    private void sendtoMovieDetail(Integer id)
+    {
+        final ProgressDialog progressDialog;
+        progressDialog = new ProgressDialog(getContext());
+        progressDialog.show();
+        progressDialog.setContentView(R.layout.progress_dialog);
+        progressDialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
+        DataClient dataClient = APIUtils.getData();
+
+        new Handler().postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                Call<Movie> callMovie = dataClient.getMovie(id);
+                callMovie.enqueue(new Callback<Movie>() {
+                    @Override
+                    public void onResponse(Call<Movie> call, Response<Movie> response) {
+                        Movie movie = response.body();
+                        Call<Video> callVideo = dataClient.getVideobyMovie(movie.getId());
+                        callVideo.enqueue(new Callback<Video>() {
+                            @Override
+                            public void onResponse(Call<Video> call, Response<Video> response) {
+                                Video video = response.body();
+                                Intent intent = new Intent(getActivity(), MovieDetailActivity.class);
+                                intent.putExtra("movie",movie);
+                                intent.putExtra("video",video);
+                                startActivity(intent);
+                            }
+
+                            @Override
+                            public void onFailure(Call<Video> call, Throwable t) {
+                                Log.d("moviebla", t.getMessage().toString());
+                            }
+                        });
+                        progressDialog.dismiss();
+                    }
+
+                    @Override
+                    public void onFailure(Call<Movie> call, Throwable t) {
+                        progressDialog.dismiss();
+                        Log.d("moviebla", t.getMessage().toString());
+                    }
+                });
+            }
+        }, 3000);
     }
 
     @Override

@@ -15,7 +15,6 @@ import android.view.View;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
-import android.widget.Toast;
 
 import com.example.acmovies.fragments.CommentFragment;
 import com.example.acmovies.fragments.ListEpisodeFragment;
@@ -26,6 +25,8 @@ import com.example.acmovies.model.GlobalCheckAuth;
 import com.example.acmovies.model.Movie;
 import com.example.acmovies.model.Status;
 import com.example.acmovies.model.User;
+import com.example.acmovies.model.Video;
+import com.example.acmovies.model.WrapperData;
 import com.example.acmovies.retrofit.APIUtils;
 import com.example.acmovies.retrofit.DataClient;
 import com.github.ybq.android.spinkit.sprite.Sprite;
@@ -37,6 +38,7 @@ import com.google.android.exoplayer2.ui.PlayerView;
 import com.google.android.exoplayer2.util.Util;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.List;
 
 import retrofit2.Call;
@@ -59,7 +61,9 @@ public class MovieDetailActivity extends AppCompatActivity {
     private String token;
 
     public Movie movie;
+    public Video video;
     public String video_url;
+    public List<Episode> episodes;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -67,18 +71,21 @@ public class MovieDetailActivity extends AppCompatActivity {
         setContentView(R.layout.activity_movie_detail);
 
         movie = (Movie) getIntent().getSerializableExtra("movie");
-        video_url = movie.getVideoUrl();
+//        video_url = movie.getVideoUrl();
+        video = (Video) getIntent().getSerializableExtra("video");
+        video_url = video.getVideoUrl();
+        episodes = new ArrayList<>();
 
         inView();
         FragmentManager fragmentManager = getSupportFragmentManager();
-        if (movie.getListepisode() == null)
+        if (movie.getEpisodes() == null)
         {
             mViewPager = new MyViewPager(fragmentManager, 3);
         }
         else{
+//            getEpisodes();
             mViewPager = new MyViewPager(fragmentManager, 4);
         }
-
         viewPager.setAdapter(mViewPager);
 
         btnFullscreen.setOnClickListener(new View.OnClickListener() {
@@ -162,7 +169,7 @@ public class MovieDetailActivity extends AppCompatActivity {
             Call<Status> callSave;
             user = ((GlobalCheckAuth)getApplication()).getUser();
             token = ((GlobalCheckAuth)getApplication()).getToken();
-            if (movie.getCategory().getName().equals("phim bộ")){
+            if (movie.getCategory().equals("phim bộ")){
                 callSave = dataClient.SaveUerView("Bearer " + token, user.getId(), movie.getId(), episode.getId());
             } else {
                 callSave = dataClient.SaveUerView("Bearer " + token, user.getId(), movie.getId(), 0);
@@ -184,6 +191,29 @@ public class MovieDetailActivity extends AppCompatActivity {
         }
     }
 
+    public void getEpisodes(){
+        DataClient dataClient = APIUtils.getData();
+        Call<WrapperData<Episode>> callEpisodes = dataClient.getEpisodesbyMovie(movie.getId());
+        callEpisodes.enqueue(new Callback<WrapperData<Episode>>() {
+            @Override
+            public void onResponse(Call<WrapperData<Episode>> call, Response<WrapperData<Episode>> response) {
+                if (response.isSuccessful()){
+                    for (Episode episode: response.body().getData()) {
+                        episodes.add(episode);
+                    }
+
+                } else {
+                    Log.d("Failed", "onResponse: "+response.errorBody());
+                }
+            }
+
+            @Override
+            public void onFailure(Call<WrapperData<Episode>> call, Throwable t) {
+                Log.d("Error", "onFailure: "+t.getMessage());
+            }
+        });
+    }
+
     @Override
     public void onStart() {
         super.onStart();
@@ -194,11 +224,11 @@ public class MovieDetailActivity extends AppCompatActivity {
         if (isLoggedIn){
             user = ((GlobalCheckAuth)getApplication()).getUser();
             token = ((GlobalCheckAuth)getApplication()).getToken();
-            if (movie.getCategory().getName().equals("phim bộ")){
-                saveUserView(movie.getListepisode().get(0));
-            } else {
-                saveUserView(null);
-            }
+//            if (movie.getCategory().equals("phim bộ")){
+//                saveUserView(movie.getListepisode().get(0));
+//            } else {
+//                saveUserView(null);
+//            }
         }
     }
 
@@ -272,17 +302,18 @@ public class MovieDetailActivity extends AppCompatActivity {
                 case 0:
                     frg = new MovieInformationFrangemt();
 
-                    bundle.putString("title", movie.getName());
-                    bundle.putString("etitle", movie.getEngName());
+                    bundle.putString("title", movie.getName().substring(0, 1).toUpperCase() + movie.getName().substring(1));
+                    bundle.putString("etitle", movie.getEngName().substring(0, 1).toUpperCase() + movie.getEngName().substring(1));
                     bundle.putString("subtitle", "Vietsub");
                     bundle.putString("quality", "full hd");
                     bundle.putString("descript", movie.getDescription());
                     bundle.putString("time", movie.getRuntime()+"");
-                    bundle.putString("genres", "abc");
-                    bundle.putString("country", movie.getCountry().getName());
-                    bundle.putString("category", movie.getCategory().getName());
-                    if (movie.getCategory().getName().equals("phim bộ")){
-                        bundle.putString("episode", movie.getListepisode().size()+"");
+                    bundle.putString("country", movie.getCountry().substring(0, 1).toUpperCase() + movie.getCountry().substring(1));
+                    bundle.putString("category", movie.getCategory().substring(0, 1).toUpperCase() + movie.getCategory().substring(1));
+                    bundle.putSerializable("directors", (Serializable) movie.getDirectors());
+                    bundle.putSerializable("genres", (Serializable) movie.getGenres());
+                    if (movie.getCategory().equals("phim bộ")){
+                        bundle.putString("episode",  String.valueOf(movie.getEpisodes()));
                     }
                     else{
                         bundle.putString("episode", "1");
@@ -295,9 +326,9 @@ public class MovieDetailActivity extends AppCompatActivity {
                 case 1:
                     if (slideCount == 4) {
                         frg = new ListEpisodeFragment();
-
-                        List<Episode> episodeList = movie.getListepisode();
-                        bundle.putSerializable("listep", (Serializable) episodeList);
+                        Log.d("episodes", "getItem: "+episodes.size());
+                        bundle.putSerializable("movieId", movie.getId());
+                        bundle.putSerializable("listep", (Serializable) episodes);
                         frg.setArguments(bundle);
                     }
                     else{

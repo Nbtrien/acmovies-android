@@ -45,7 +45,7 @@ public class HistoryRecyclerAdapter extends RecyclerView.Adapter<HistoryRecycler
 
     @Override
     public void onBindViewHolder(@NonNull HistoryViewHolder holder, int position) {
-        Glide.with(context).load(userViewList.get(position).getMovie().getCoverimage().getImageUrl()).into(holder.imgMovie);
+//        Glide.with(context).load(userViewList.get(position).getMovie().getCoverimage().getImageUrl()).into(holder.imgMovie);
         holder.txtName.setText(userViewList.get(position).getMovie().getName());
         if (userViewList.get(position).getEpisode() != null) {
             String episodeTitle = "";

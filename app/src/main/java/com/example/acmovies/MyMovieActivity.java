@@ -2,41 +2,35 @@ package com.example.acmovies;
 
 import android.app.ProgressDialog;
 import android.content.Intent;
-import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.os.Handler;
 import android.util.Log;
-import android.view.View;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
-import android.widget.TextView;
 import android.widget.Toast;
 
-import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.acmovies.Interface.ItemClickListener;
 import com.example.acmovies.Interface.ItemDeleteClickListener;
-import com.example.acmovies.adapter.HistoryRecyclerAdapter;
-import com.example.acmovies.adapter.ItemRecyclerAdapter;
-import com.example.acmovies.adapter.MovieListRecyclerAdapter;
 import com.example.acmovies.adapter.MyMovieRecyclerAdapter;
-import com.example.acmovies.fragments.SeriesMoviesFragment;
 import com.example.acmovies.model.Actor;
 import com.example.acmovies.model.Episode;
-import com.example.acmovies.model.Genres;
+import com.example.acmovies.model.Genre;
 import com.example.acmovies.model.Movie;
-import com.example.acmovies.model.Pagination;
 import com.example.acmovies.model.Status;
 import com.example.acmovies.model.UserView;
+import com.example.acmovies.model.Video;
+import com.example.acmovies.model.WrapperData;
 import com.example.acmovies.retrofit.APIUtils;
 import com.example.acmovies.retrofit.DataClient;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -78,32 +72,34 @@ public class MyMovieActivity extends AppCompatActivity implements ItemClickListe
 
     private void getData() {
         DataClient dataClient = APIUtils.getData();
-        Call<List<Movie>> paginationCall = dataClient.GetMoivesbyUser("Bearer " + token, user_id);
-        paginationCall.enqueue(new Callback<List<Movie>>() {
+        Map<String, String> params = new HashMap<>();
+        params.put("user_id", String.valueOf(user_id));
+        Call<WrapperData<Movie>> callMovies = dataClient.getMoivesbyUser("Bearer " + token, params);
+        callMovies.enqueue(new Callback<WrapperData<Movie>>() {
             @Override
-            public void onResponse(Call<List<Movie>> call, Response<List<Movie>> response) {
+            public void onResponse(Call<WrapperData<Movie>> call, Response<WrapperData<Movie>> response) {
                 if (response.isSuccessful()){
-                    List<Movie> list = (List<Movie>) response.body();
+                    List<Movie> list = (List<Movie>) response.body().getData();
                     for (Movie movie : list) {
                         movieList.add(movie);
                     }
                     myMovieRecyclerAdapter.notifyDataSetChanged();
                 } else {
-                    Log.d("pagination", response.isSuccessful()+"loix");
+                    Log.d("pagination", response.isSuccessful()+response.message());
                     getData();
                 }
             }
 
             @Override
-            public void onFailure(Call<List<Movie>> call, Throwable t) {
+            public void onFailure(Call<WrapperData<Movie>> call, Throwable t) {
                 Log.d("pagination", t.toString() + "");
                 getData();
             }
         });
     }
 
-    @Override
-    public void onMovieClick(Movie movie) {
+    private void sendtoMovieDetail(Integer id)
+    {
         final ProgressDialog progressDialog;
         progressDialog = new ProgressDialog(this);
         progressDialog.show();
@@ -114,30 +110,52 @@ public class MyMovieActivity extends AppCompatActivity implements ItemClickListe
         new Handler().postDelayed(new Runnable() {
             @Override
             public void run() {
-                Call<Movie> callMovie = dataClient.GetMoviebyId(movie.getId());
+                Call<Movie> callMovie = dataClient.getMovie(id);
                 callMovie.enqueue(new Callback<Movie>() {
                     @Override
                     public void onResponse(Call<Movie> call, Response<Movie> response) {
                         Movie movie = response.body();
-                        Intent intent = new Intent(MyMovieActivity.this, MovieDetailActivity.class);
-                        intent.putExtra("movie",movie);
-                        startActivity(intent);
+                        Call<Video> callVideo = dataClient.getVideobyMovie(movie.getId());
+                        callVideo.enqueue(new Callback<Video>() {
+                            @Override
+                            public void onResponse(Call<Video> call, Response<Video> response) {
+                                Video video = response.body();
+                                Intent intent = new Intent(MyMovieActivity.this, MovieDetailActivity.class);
+                                intent.putExtra("movie",movie);
+                                intent.putExtra("video",video);
+                                startActivity(intent);
+                            }
+
+                            @Override
+                            public void onFailure(Call<Video> call, Throwable t) {
+                                Log.d("moviebla", t.getMessage().toString());
+                            }
+                        });
                         progressDialog.dismiss();
                     }
 
                     @Override
                     public void onFailure(Call<Movie> call, Throwable t) {
                         progressDialog.dismiss();
-                        Log.d("ERROR: ", t.getMessage().toString());
+                        Log.d("moviebla", t.getMessage().toString());
                     }
                 });
             }
         }, 3000);
     }
 
+    @Override
+    public void onMovieClick(Movie movie) {
+        sendtoMovieDetail(movie.getId());
+    }
+
     private void deleteUserMovie(Movie movie){
+        Map<String, String> params = new HashMap<>();
+        params.put("user_id", String.valueOf(user_id));
+        params.put("movie_id", String.valueOf(movie.getId()));
+
         DataClient dataClient = APIUtils.getData();
-        Call<Status> callCheck = dataClient.DeleteUerMovie("Bearer " + token, user_id, movie.getId());
+        Call<Status> callCheck = dataClient.deleteUerMovie("Bearer " + token, params);
         callCheck.enqueue(new Callback<Status>() {
             @Override
             public void onResponse(Call<Status> call, Response<Status> response) {
@@ -168,7 +186,7 @@ public class MyMovieActivity extends AppCompatActivity implements ItemClickListe
     }
 
     @Override
-    public void onGenreClick(Genres genres) {
+    public void onGenreClick(Genre genres) {
 
     }
 

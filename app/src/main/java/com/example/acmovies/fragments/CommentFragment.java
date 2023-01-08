@@ -1,7 +1,6 @@
 package com.example.acmovies.fragments;
 
 import android.app.Dialog;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
@@ -12,7 +11,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -23,20 +21,21 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.example.acmovies.AuthActivity;
 import com.example.acmovies.InputNewComment;
 import com.example.acmovies.Interface.DialogCloseListener;
-import com.example.acmovies.MainActivity;
 import com.example.acmovies.R;
 import com.example.acmovies.adapter.CommentRecyclerAdapter;
 import com.example.acmovies.model.Comment;
 import com.example.acmovies.model.CommentPagination;
 import com.example.acmovies.model.GlobalCheckAuth;
-import com.example.acmovies.model.Movie;
 import com.example.acmovies.model.User;
+import com.example.acmovies.model.WrapperData;
 import com.example.acmovies.retrofit.APIUtils;
 import com.example.acmovies.retrofit.DataClient;
 import com.google.android.material.textfield.TextInputEditText;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -67,11 +66,13 @@ public class CommentFragment extends Fragment implements DialogCloseListener {
         inView();
         Bundle bundle = getArguments();
         movie_id = bundle.getInt("movie_id");
-        getData();
+        getComments();
         return view;
+
     }
 
     private void inView() {
+        Log.d("comment", "comment");
         dialog = new Dialog(getContext());
         inLoggedIn = ((GlobalCheckAuth)getActivity().getApplication()).isLogged();
 
@@ -107,37 +108,45 @@ public class CommentFragment extends Fragment implements DialogCloseListener {
                 if(recyclerComments.canScrollVertically(1)){
                     if (currentPage <= totalAvailablePages){
                         currentPage += 1;
-                        getData();
+                        getComments();
                     }
                 }
             }
         });
     }
 
-    private void getData() {
+    private void getComments() {
+        Map<String, String> params = new HashMap<>();
+        params.put("movie_id", String.valueOf(movie_id));
+        params.put("keyword", "created_at");
+        params.put("limit", "12");
+        params.put("page",  Integer.toString(currentPage) );
+
         DataClient dataClient = APIUtils.getData();
-        Call<CommentPagination> callComments = dataClient.GetCommentsbyMovie(movie_id, currentPage);
-        callComments.enqueue(new Callback<CommentPagination>() {
+        Call<WrapperData<Comment>> callComments = dataClient.getComments(params);
+        callComments.enqueue(new Callback<WrapperData<Comment>>() {
             @Override
-            public void onResponse(Call<CommentPagination> call, Response<CommentPagination> response) {
+            public void onResponse(Call<WrapperData<Comment>> call, Response<WrapperData<Comment>> response) {
                 if (response.isSuccessful()){
-                    CommentPagination pagination = response.body();
-                    totalAvailablePages = pagination.getLastPage();
-                    Integer commentNumber = pagination.getTotal();
+                    ArrayList<Comment> list = (ArrayList<Comment>) response.body().getData();
+
+                    totalAvailablePages = response.body().getMeta().getLastPage();
+                    Integer commentNumber = response.body().getMeta().getTotal();
                     txtCommentnumber.setText("Bình luận ("+commentNumber+")");
-                    for (Comment comment : pagination.getComments()) {
+                    for (Comment comment : list) {
                         commentList.add(comment);
                     }
                     commentAdapter.notifyDataSetChanged();
+                    Log.d("comment", list.size()+"");
                 } else {
-                    getData();
+                    getComments();
                 }
             }
 
             @Override
-            public void onFailure(Call<CommentPagination> call, Throwable t) {
+            public void onFailure(Call<WrapperData<Comment>> call, Throwable t) {
                 Log.d("ERROR:", t.toString());
-                getData();
+                getComments();
             }
         });
     }
@@ -179,7 +188,7 @@ public class CommentFragment extends Fragment implements DialogCloseListener {
             currentPage = 1;
             totalAvailablePages = 1;
             commentList.clear();
-            getData();
+            getComments();
         }
     }
 }

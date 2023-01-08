@@ -30,6 +30,9 @@ import com.google.android.material.textfield.TextInputEditText;
 
 import org.w3c.dom.Text;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
@@ -120,8 +123,13 @@ public class InputNewComment extends BottomSheetDialogFragment {
 
     private void saveComment(){
         DataClient dataClient = APIUtils.getData();
+        Map<String, String> params = new HashMap<>();
+        params.put("movie_id", String.valueOf(movie_id));
+        params.put("user_id", String.valueOf(user_id));
         String content = txtComment.getText().toString();
-        Call<Status> callStoreComment = dataClient.SaveComment("Bearer " + token, movie_id, user_id, content);
+        params.put("content", content);
+
+        Call<Status> callStoreComment = dataClient.postComment("Bearer " + token,params);
         callStoreComment.enqueue(new Callback<Status>() {
             @Override
             public void onResponse(Call<Status> call, Response<Status> response) {

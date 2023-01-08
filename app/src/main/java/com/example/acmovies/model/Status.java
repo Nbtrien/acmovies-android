@@ -27,4 +27,11 @@ public class Status {
         this.message = message;
     }
 
+    @Override
+    public String toString() {
+        return "Status{" +
+                "status=" + status +
+                ", message='" + message + '\'' +
+                '}';
+    }
 }

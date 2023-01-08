@@ -17,9 +17,10 @@ import com.example.acmovies.R;
 import com.example.acmovies.adapter.MainRecyclerAdapter;
 import com.example.acmovies.model.Actor;
 import com.example.acmovies.model.Episode;
-import com.example.acmovies.model.Genres;
+import com.example.acmovies.model.Genre;
 import com.example.acmovies.model.ListMovie;
 import com.example.acmovies.model.Movie;
+import com.example.acmovies.model.WrapperData;
 import com.example.acmovies.retrofit.APIUtils;
 import com.example.acmovies.retrofit.DataClient;
 
@@ -54,7 +55,8 @@ public class RelatedMoviesFragment extends Fragment implements ItemClickListener
         mainRecycler.setHasFixedSize(true);
         mainRecycler.setAdapter(mainRecyclerAdapter);
 
-        getData();
+        getSimilarMovie();
+        getSameSeries();
         return view;
     }
 
@@ -64,30 +66,55 @@ public class RelatedMoviesFragment extends Fragment implements ItemClickListener
     }
 
 //    Get Related Movies
-    private void getData()
+    private void getSimilarMovie()
     {
         DataClient dataClient = APIUtils.getData();
-        Call<List<ListMovie>> callrelatedMovies = dataClient.GetRelatedMovies(movie_id);
-        callrelatedMovies.enqueue(new Callback<List<ListMovie>>() {
+        Call<WrapperData<Movie>> call = dataClient.getSimilaMovie(movie_id);
+        call.enqueue(new Callback<WrapperData<Movie>>() {
             @Override
-            public void onResponse(Call<List<ListMovie>> call, Response<List<ListMovie>> response) {
-                if (response.isSuccessful()){
-                    ArrayList<ListMovie> list = (ArrayList<ListMovie>) response.body();
-                    for (ListMovie movie : list)
-                    {
-                        listRelatedMovie.add(movie);
-                    }
+            public void onResponse(Call<WrapperData<Movie>> call, Response<WrapperData<Movie>> response) {
+                if (response.isSuccessful())
+                {
+                    ArrayList<Movie> movies = (ArrayList<Movie>) response.body().getData();
+                    ListMovie listMovie = new ListMovie();
+                    listMovie.setTitle("Phim lien quan");
+                    listMovie.setMovies(movies);
+                    listRelatedMovie.add(listMovie);
                     mainRecyclerAdapter.notifyDataSetChanged();
-                } else {
-                    getData();
+                    Log.d("RelatedMoviesFragment", listMovie.toString());
+                }   else {
+                    Log.d("RelatedMoviesFragment", "onResponse: "+response.message());
                 }
-
             }
 
             @Override
-            public void onFailure(Call<List<ListMovie>> call, Throwable t) {
-                Log.d("RELATED: ", t.getMessage().toString());
-                getData();
+            public void onFailure(Call<WrapperData<Movie>> call, Throwable t) {
+                getSimilarMovie();
+            }
+        });
+    }
+
+    private void getSameSeries(){
+        DataClient dataClient = APIUtils.getData();
+        Call<WrapperData<ListMovie>> callLM = dataClient.getSameSiries(movie_id);
+        callLM.enqueue(new Callback<WrapperData<ListMovie>>() {
+            @Override
+            public void onResponse(Call<WrapperData<ListMovie>> call, Response<WrapperData<ListMovie>> response) {
+                if (response.isSuccessful())
+                {
+                    ArrayList<ListMovie> listMovies = (ArrayList<ListMovie>) response.body().getData();
+                    for (ListMovie list : listMovies) {
+                        listRelatedMovie.add(list);
+                    }
+                    mainRecyclerAdapter.notifyDataSetChanged();
+                } else {
+                    Log.d("TAG", "onResponse: "+response.errorBody());
+                }
+            }
+
+            @Override
+            public void onFailure(Call<WrapperData<ListMovie>> call, Throwable t) {
+                getSameSeries();
             }
         });
     }
@@ -108,7 +135,7 @@ public class RelatedMoviesFragment extends Fragment implements ItemClickListener
     }
 
     @Override
-    public void onGenreClick(Genres genres) {
+    public void onGenreClick(Genre genres) {
 
     }
 }

@@ -6,7 +6,6 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import android.app.ProgressDialog;
 import android.content.Intent;
-import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.os.Handler;
 import android.util.Log;
@@ -20,15 +19,12 @@ import com.example.acmovies.Interface.ItemDeleteClickListener;
 import com.example.acmovies.adapter.HistoryRecyclerAdapter;
 import com.example.acmovies.model.Actor;
 import com.example.acmovies.model.Episode;
-import com.example.acmovies.model.Genres;
+import com.example.acmovies.model.Genre;
 import com.example.acmovies.model.Movie;
-import com.example.acmovies.model.Pagination;
 import com.example.acmovies.model.Status;
-import com.example.acmovies.model.User;
 import com.example.acmovies.model.UserView;
 import com.example.acmovies.retrofit.APIUtils;
 import com.example.acmovies.retrofit.DataClient;
-import com.google.android.exoplayer2.C;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -134,23 +130,23 @@ public class HistoryActivity extends AppCompatActivity implements ItemClickListe
         new Handler().postDelayed(new Runnable() {
             @Override
             public void run() {
-                Call<Movie> callMovie = dataClient.GetMoviebyId(movie.getId());
-                callMovie.enqueue(new Callback<Movie>() {
-                    @Override
-                    public void onResponse(Call<Movie> call, Response<Movie> response) {
-                        Movie movie = response.body();
-                        Intent intent = new Intent(HistoryActivity.this, MovieDetailActivity.class);
-                        intent.putExtra("movie",movie);
-                        startActivity(intent);
-                        progressDialog.dismiss();
-                    }
-
-                    @Override
-                    public void onFailure(Call<Movie> call, Throwable t) {
-                        progressDialog.dismiss();
-                        Log.d("ERROR: ", t.getMessage().toString());
-                    }
-                });
+//                Call<Movie> callMovie = dataClient.GetMoviebyId(movie.getId());
+//                callMovie.enqueue(new Callback<Movie>() {
+//                    @Override
+//                    public void onResponse(Call<Movie> call, Response<Movie> response) {
+//                        Movie movie = response.body();
+//                        Intent intent = new Intent(HistoryActivity.this, MovieDetailActivity.class);
+//                        intent.putExtra("movie",movie);
+//                        startActivity(intent);
+//                        progressDialog.dismiss();
+//                    }
+//
+//                    @Override
+//                    public void onFailure(Call<Movie> call, Throwable t) {
+//                        progressDialog.dismiss();
+//                        Log.d("ERROR: ", t.getMessage().toString());
+//                    }
+//                });
             }
         }, 3000);
     }
@@ -166,7 +162,7 @@ public class HistoryActivity extends AppCompatActivity implements ItemClickListe
     }
 
     @Override
-    public void onGenreClick(Genres genres) {
+    public void onGenreClick(Genre genres) {
 
     }
 

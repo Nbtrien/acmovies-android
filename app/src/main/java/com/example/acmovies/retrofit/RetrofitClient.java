@@ -1,5 +1,7 @@
 package com.example.acmovies.retrofit;
 
+import android.util.Log;
+
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
@@ -18,9 +20,9 @@ public class RetrofitClient {
     public static Retrofit getClient(String base_url)
     {
         OkHttpClient builder = new OkHttpClient.Builder()
-                                        .readTimeout(3, TimeUnit.SECONDS)
-                                        .writeTimeout(3, TimeUnit.SECONDS)
-                                        .connectTimeout(5,TimeUnit.SECONDS)
+                                        .readTimeout(30, TimeUnit.SECONDS)
+                                        .writeTimeout(30, TimeUnit.SECONDS)
+                                        .connectTimeout(30,TimeUnit.SECONDS)
                                         .retryOnConnectionFailure(true)
                                         .build();
         Gson gson = new GsonBuilder().setLenient().create();
@@ -29,6 +31,7 @@ public class RetrofitClient {
                     .client(builder)
                     .addConverterFactory(GsonConverterFactory.create(gson))
                     .build();
+
         return retrofit;
     }
 }

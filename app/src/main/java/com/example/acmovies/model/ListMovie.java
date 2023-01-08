@@ -3,7 +3,6 @@ package com.example.acmovies.model;
 import java.io.Serializable;
 import java.util.List;
 
-import com.example.acmovies.model.Movie;
 import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
 

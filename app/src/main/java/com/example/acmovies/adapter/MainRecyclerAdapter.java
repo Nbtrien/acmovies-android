@@ -18,10 +18,11 @@ import com.example.acmovies.MovieDetailActivity;
 import com.example.acmovies.Interface.ItemClickListener;
 import com.example.acmovies.R;
 import com.example.acmovies.model.Actor;
-import com.example.acmovies.model.Genres;
+import com.example.acmovies.model.Genre;
 import com.example.acmovies.model.ListMovie;
 import com.example.acmovies.model.Episode;
 import com.example.acmovies.model.Movie;
+import com.example.acmovies.model.Video;
 import com.example.acmovies.retrofit.APIUtils;
 import com.example.acmovies.retrofit.DataClient;
 
@@ -50,7 +51,8 @@ public class MainRecyclerAdapter extends RecyclerView.Adapter<MainRecyclerAdapte
     @Override
     public void onBindViewHolder(@NonNull MainViewHolder holder, int position)
     {
-        holder.txtCategories.setText(listMovieList.get(position).getTitle());
+        holder.txtCategories.setText(listMovieList.get(position).getTitle().substring(0, 1).toUpperCase() + listMovieList.get(position).getTitle().substring(1));
+//        if ((listMovieList.get(position).getMovies()) != null)
         setItemRecycler(holder.recyclerView, listMovieList.get(position).getMovies());
     }
 
@@ -62,7 +64,6 @@ public class MainRecyclerAdapter extends RecyclerView.Adapter<MainRecyclerAdapte
     @Override
     public void onMovieClick(Movie movie)
     {
-//        Toast.makeText(context, movie.getId()+"", Toast.LENGTH_SHORT).show();
         sendtoMovieDetail(movie.getId());
     }
 
@@ -77,7 +78,7 @@ public class MainRecyclerAdapter extends RecyclerView.Adapter<MainRecyclerAdapte
     }
 
     @Override
-    public void onGenreClick(Genres genres) {
+    public void onGenreClick(Genre genres) {
 
     }
 
@@ -90,7 +91,7 @@ public class MainRecyclerAdapter extends RecyclerView.Adapter<MainRecyclerAdapte
         progressDialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
         progressDialog.setCanceledOnTouchOutside(false);
         DataClient dataClient = APIUtils.getData();
-        Call<Movie> callMovie = dataClient.GetMoviebyId(id);
+        Call<Movie> callMovie = dataClient.getMovie(id);
 
         new Handler().postDelayed(new Runnable() {
             @Override
@@ -99,16 +100,29 @@ public class MainRecyclerAdapter extends RecyclerView.Adapter<MainRecyclerAdapte
                     @Override
                     public void onResponse(Call<Movie> call, Response<Movie> response) {
                         Movie movie = response.body();
-                        Intent intent = new Intent(context,MovieDetailActivity.class);
-                        intent.putExtra("movie",movie);
-                        context.startActivity(intent);
+                        Call<Video> callVideo = dataClient.getVideobyMovie(movie.getId());
+                        callVideo.enqueue(new Callback<Video>() {
+                            @Override
+                            public void onResponse(Call<Video> call, Response<Video> response) {
+                                Video video = response.body();
+                                Intent intent = new Intent(context, MovieDetailActivity.class);
+                                intent.putExtra("movie",movie);
+                                intent.putExtra("video",video);
+                                context.startActivity(intent);
+                            }
+
+                            @Override
+                            public void onFailure(Call<Video> call, Throwable t) {
+                                Log.d("moviebla", t.getMessage().toString());
+                            }
+                        });
                         progressDialog.dismiss();
                     }
 
                     @Override
                     public void onFailure(Call<Movie> call, Throwable t) {
                         progressDialog.dismiss();
-                        Log.d("ERROR: ", t.getMessage().toString());
+                        Log.d("moviebla", t.getMessage().toString());
                     }
                 });
             }

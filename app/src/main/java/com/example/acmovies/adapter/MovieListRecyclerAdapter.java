@@ -39,7 +39,7 @@ public class MovieListRecyclerAdapter extends RecyclerView.Adapter<MovieListRecy
     {
         holder.txt_film.setText(movieList.get(position).getName());
         if (movieList.get(position).getProfileimage() != null){
-            Glide.with(context).load(movieList.get(position).getProfileimage().getImageUrl()).into(holder.img_film);
+//            Glide.with(context).load(movieList.get(position).getProfileimage().getImageUrl()).into(holder.img_film);
         }
     }
 

@@ -30,17 +30,24 @@ import com.example.acmovies.adapter.MoviePropertiesAdapter;
 import com.example.acmovies.model.Actor;
 import com.example.acmovies.model.Director;
 import com.example.acmovies.model.Episode;
-import com.example.acmovies.model.Genres;
+import com.example.acmovies.model.Genre;
 import com.example.acmovies.model.GlobalCheckAuth;
 import com.example.acmovies.model.Movie;
 import com.example.acmovies.model.MovieProperties;
 import com.example.acmovies.model.Status;
 import com.example.acmovies.model.User;
+import com.example.acmovies.model.WrapperData;
 import com.example.acmovies.retrofit.APIUtils;
 import com.example.acmovies.retrofit.DataClient;
 
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -92,10 +99,9 @@ public class MovieInformationFrangemt extends Fragment implements ItemClickListe
 
         String category = bundle.getString("category");
 
-        setData();
-        getDirectors();
-        getGenres();
         getActors();
+        setData();
+
         return view;
     }
 
@@ -154,7 +160,11 @@ public class MovieInformationFrangemt extends Fragment implements ItemClickListe
 
 //    check movie by user
     private void checkMoviebyUser(){
-        Call<Status> callCheck = dataClient.CheckMoviebyUser("Bearer " + token, user.getId(), movie_id);
+        Map<String, String> params = new HashMap<>();
+        params.put("user_id", String.valueOf(user.getId()));
+        params.put("movie_id", String.valueOf(movie_id));
+
+        Call<Status> callCheck = dataClient.CheckMoviebyUser("Bearer " + token, params);
         callCheck.enqueue(new Callback<Status>() {
             @Override
             public void onResponse(Call<Status> call, Response<Status> response) {
@@ -182,7 +192,11 @@ public class MovieInformationFrangemt extends Fragment implements ItemClickListe
 
 //    check movie by user
     private void saveUserMovie(){
-        Call<Status> callCheck = dataClient.SaveUerMovie("Bearer " + token, user.getId(), movie_id);
+        Map<String, String> params = new HashMap<>();
+        params.put("user_id", String.valueOf(user.getId()));
+        params.put("movie_id", String.valueOf(movie_id));
+
+        Call<Status> callCheck = dataClient.saveUerMovie("Bearer " + token, params);
         callCheck.enqueue(new Callback<Status>() {
             @Override
             public void onResponse(Call<Status> call, Response<Status> response) {
@@ -206,7 +220,11 @@ public class MovieInformationFrangemt extends Fragment implements ItemClickListe
 
 //    Delete movie out of list
     private void deleteUserMovie(){
-        Call<Status> callCheck = dataClient.DeleteUerMovie("Bearer " + token, user.getId(), movie_id);
+        Map<String, String> params = new HashMap<>();
+        params.put("user_id", String.valueOf(user.getId()));
+        params.put("movie_id", String.valueOf(movie_id));
+
+        Call<Status> callCheck = dataClient.deleteUerMovie("Bearer " + token, params);
         callCheck.enqueue(new Callback<Status>() {
             @Override
             public void onResponse(Call<Status> call, Response<Status> response) {
@@ -231,98 +249,74 @@ public class MovieInformationFrangemt extends Fragment implements ItemClickListe
 //    get actors
     private void getActors()
     {
-        Call<List<Actor>> listActorCall = dataClient.GetActorsbyMovie(movie_id);
-        listActorCall.enqueue(new Callback<List<Actor>>() {
+        Call<WrapperData<Actor>> listActorCall = dataClient.GetActorsbyMovie(movie_id);
+        listActorCall.enqueue(new Callback<WrapperData<Actor>>() {
             @Override
-            public void onResponse(Call<List<Actor>> call, Response<List<Actor>> response) {
+            public void onResponse(Call<WrapperData<Actor>> call, Response<WrapperData<Actor>> response) {
                 if (response.isSuccessful()){
-                    ArrayList<Actor> list = (ArrayList<Actor>) response.body();
+                    ArrayList<Actor> list = (ArrayList<Actor>) response.body().getData();
                     for (Actor actor : list){
                         actorList.add(actor);
                     }
                     actorRecyclerAdapter.notifyDataSetChanged();
+
                 } else {
                     getActors();
                 }
             }
 
             @Override
-            public void onFailure(Call<List<Actor>> call, Throwable t) {
+            public void onFailure(Call<WrapperData<Actor>> call, Throwable t) {
                 Log.d("ERROR: ", t.getMessage().toString());
                 getActors();
-            }
-        });
-    }
-//  get directors
-    private void getDirectors()
-    {
-        Call<List<Director>> listDirectorCall = dataClient.GetDirectorbyMovie(movie_id);
-        listDirectorCall.enqueue(new Callback<List<Director>>() {
-            @Override
-            public void onResponse(Call<List<Director>> call, Response<List<Director>> response) {
-                ArrayList<Director> list = (ArrayList<Director>) response.body();
-                for (Director director : list){
-                    if (director == list.get(list.size()-1))
-                        directorList += director.getName();
-                    else
-                        directorList += director.getName()+", ";
-                }
-                moviePropertiesList.add(new MovieProperties("Thời lượng",bundle.getString("time")+" phút"));
-                moviePropertiesList.add(new MovieProperties("Đạo diễn", directorList));
-
-                moviePropertiesList.add(new MovieProperties("Quốc gia", bundle.getString("country")));
-                moviePropertiesList.add(new MovieProperties("Số tập", bundle.getString("episode")));
-                moviePropertiesList.add(new MovieProperties("Phát hành", bundle.getString("years")));
-
-                moviePropertiesAdapter.notifyDataSetChanged();
-            }
-
-            @Override
-            public void onFailure(Call<List<Director>> call, Throwable t) {
-                getDirectors();
-                Log.d("ERROR: ", t.getMessage().toString());
-            }
-        });
-    }
-
-//  Get Genres
-    private void getGenres()
-    {
-        Call<List<Genres>> listGenresCall = dataClient.GetGenresbyMovie(movie_id);
-        listGenresCall.enqueue(new Callback<List<Genres>>() {
-            @Override
-            public void onResponse(Call<List<Genres>> call, Response<List<Genres>> response) {
-                if (response.isSuccessful()){
-                    ArrayList<Genres> list = (ArrayList<Genres>) response.body();
-                    for (Genres genres : list){
-                        if (genres == list.get(list.size()-1))
-                            genresList += genres.getName();
-                        else
-                            genresList += genres.getName()+", ";
-                    }
-                    moviePropertiesList.add(new MovieProperties("Thể loại", genresList));
-                    moviePropertiesAdapter.notifyDataSetChanged();
-                } else {
-                    getGenres();
-                }
-
-            }
-
-            @Override
-            public void onFailure(Call<List<Genres>> call, Throwable t) {
-                Log.d("ERROR: ", t.getMessage().toString());
-                getGenres();
             }
         });
     }
 
     private void setData()
     {
+        Log.d("setdata", "setData: ");
         txt_name.setText(bundle.getString("title"));
         txt_ename.setText(bundle.getString("etitle"));
         txt_subtitle.setText(bundle.getString("subtitle"));
         txt_quality.setText(bundle.getString("quality"));
         txt_content.setText(Html.fromHtml(bundle.getString("descript")));
+
+        ArrayList<Director> directors = (ArrayList<Director>) bundle.getSerializable("directors");
+        for (Director director : directors){
+            if (director == directors.get(directors.size()-1))
+                directorList += (director.getName().substring(0, 1).toUpperCase() + director.getName().substring(1));
+            else
+                directorList += (director.getName().substring(0, 1).toUpperCase() + director.getName().substring(1)+", ");
+        }
+
+
+        ArrayList<Genre> genres = (ArrayList<Genre>) bundle.getSerializable("genres");
+        for (Genre genre : genres){
+            if (genre == genres.get(genres.size()-1))
+                genresList += (genre.getName().substring(0, 1).toUpperCase() + genre.getName().substring(1));
+            else
+                genresList += (genre.getName().substring(0, 1).toUpperCase() + genre.getName().substring(1)+", ");
+        }
+        DateFormat parser = new SimpleDateFormat("yyyy-MM-dd");
+        DateFormat formatter = new SimpleDateFormat("dd-MM-yyyy");
+        Date convertedDate = null;
+        try {
+            convertedDate = parser.parse(bundle.getString("years"));
+        } catch (ParseException e) {
+            e.printStackTrace();
+        }
+        String realeaseDate = formatter.format(convertedDate);
+
+
+        moviePropertiesList.add(new MovieProperties("Thể loại", genresList));
+        moviePropertiesList.add(new MovieProperties("Thời lượng",bundle.getString("time")+" phút"));
+        moviePropertiesList.add(new MovieProperties("Đạo diễn", directorList));
+
+        moviePropertiesList.add(new MovieProperties("Quốc gia", bundle.getString("country")));
+        moviePropertiesList.add(new MovieProperties("Số tập", bundle.getString("episode")));
+
+        moviePropertiesList.add(new MovieProperties("Phát hành", realeaseDate));
     }
 
     private void openLoginDialog(){
@@ -360,6 +354,7 @@ public class MovieInformationFrangemt extends Fragment implements ItemClickListe
 
     }
 
+
     @Override
     public void onEpisodeClick(Episode episode) {
 
@@ -371,7 +366,7 @@ public class MovieInformationFrangemt extends Fragment implements ItemClickListe
     }
 
     @Override
-    public void onGenreClick(Genres genres) {
+    public void onGenreClick(Genre genres) {
 
     }
 }

@@ -26,9 +26,10 @@ import com.example.acmovies.Interface.ItemClickListener;
 import com.example.acmovies.adapter.SearchRecyclerAdapter;
 import com.example.acmovies.model.Actor;
 import com.example.acmovies.model.Episode;
-import com.example.acmovies.model.Genres;
+import com.example.acmovies.model.Genre;
 import com.example.acmovies.model.Movie;
-import com.example.acmovies.model.Pagination;
+import com.example.acmovies.model.Video;
+import com.example.acmovies.model.WrapperData;
 import com.example.acmovies.retrofit.APIUtils;
 import com.example.acmovies.retrofit.DataClient;
 
@@ -37,7 +38,9 @@ import retrofit2.Callback;
 import retrofit2.Response;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -141,17 +144,23 @@ public class SearchActivity extends AppCompatActivity implements ItemClickListen
     }
 
     private void searchMovie(String key){
+        Map<String, String> params = new HashMap<>();
+        params.put("keyword", "releasedate");
+        params.put("limit", "9");
+        params.put("key", key);
+        params.put("page",  Integer.toString(currentPage) );
         DataClient dataClient = APIUtils.getData();
-        Call<Pagination> callSearch = dataClient.SearchMovie(key, currentPage);
-        callSearch.enqueue(new Callback<Pagination>() {
+        Call<WrapperData<Movie>> callSearch = dataClient.getMoviebyKey(params);
+        callSearch.enqueue(new Callback<WrapperData<Movie>>() {
             @Override
-            public void onResponse(Call<Pagination> call, Response<Pagination> response) {
+            public void onResponse(Call<WrapperData<Movie>> call, Response<WrapperData<Movie>> response) {
                 progressLoaddata.setVisibility(View.GONE);
-                Pagination pag = response.body();
-                totalAvailablePages = pag.getLastPage();
-                Log.d("pagination", pag.getMovies().size()+"");
-                if (pag.getMovies().size() != 0){
-                    for (Movie movie : pag.getMovies()){
+                ArrayList<Movie> list = (ArrayList<Movie>) response.body().getData();
+
+                totalAvailablePages = response.body().getMeta().getLastPage();
+                Log.d("searchActivity", movieList.size()+"");
+                if (list.size() != 0){
+                    for (Movie movie : list){
                         movieList.add(movie);
                     }
                     recyclerAdapter.notifyDataSetChanged();
@@ -164,7 +173,7 @@ public class SearchActivity extends AppCompatActivity implements ItemClickListen
             }
 
             @Override
-            public void onFailure(Call<Pagination> call, Throwable t) {
+            public void onFailure(Call<WrapperData<Movie>> call, Throwable t) {
                 Log.d("pagination", t.toString()+"");
             }
         });
@@ -172,36 +181,7 @@ public class SearchActivity extends AppCompatActivity implements ItemClickListen
 
     @Override
     public void onMovieClick(Movie movie) {
-        final ProgressDialog progressDialog;
-        progressDialog = new ProgressDialog(SearchActivity.this);
-        progressDialog.show();
-        progressDialog.setContentView(R.layout.progress_dialog);
-        progressDialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
-        DataClient dataClient = APIUtils.getData();
-
-        new Handler().postDelayed(new Runnable() {
-            @Override
-            public void run() {
-                Call<Movie> callMovie = dataClient.GetMoviebyId(movie.getId());
-                callMovie.enqueue(new Callback<Movie>() {
-                    @Override
-                    public void onResponse(Call<Movie> call, Response<Movie> response) {
-                        Movie movie = response.body();
-                        Intent intent = new Intent(SearchActivity.this, MovieDetailActivity.class);
-                        intent.putExtra("movie",movie);
-                        startActivity(intent);
-                        progressDialog.dismiss();
-                    }
-
-                    @Override
-                    public void onFailure(Call<Movie> call, Throwable t) {
-                        progressDialog.dismiss();
-                        Log.d("ERROR: ", t.getMessage().toString());
-                    }
-                });
-            }
-        }, 3000);
-
+        sendtoMovieDetail(movie.getId());
     }
 
     @Override
@@ -215,8 +195,54 @@ public class SearchActivity extends AppCompatActivity implements ItemClickListen
     }
 
     @Override
-    public void onGenreClick(Genres genres) {
+    public void onGenreClick(Genre genres) {
 
+    }
+
+    private void sendtoMovieDetail(Integer id)
+    {
+        final ProgressDialog progressDialog;
+        progressDialog = new ProgressDialog(this);
+        progressDialog.show();
+        progressDialog.setContentView(R.layout.progress_dialog);
+        progressDialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
+        DataClient dataClient = APIUtils.getData();
+
+        new Handler().postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                Call<Movie> callMovie = dataClient.getMovie(id);
+                callMovie.enqueue(new Callback<Movie>() {
+                    @Override
+                    public void onResponse(Call<Movie> call, Response<Movie> response) {
+                        Movie movie = response.body();
+                        Call<Video> callVideo = dataClient.getVideobyMovie(movie.getId());
+                        callVideo.enqueue(new Callback<Video>() {
+                            @Override
+                            public void onResponse(Call<Video> call, Response<Video> response) {
+                                Video video = response.body();
+                                Intent intent = new Intent(SearchActivity.this, MovieDetailActivity.class);
+                                intent.putExtra("movie",movie);
+                                intent.putExtra("video",video);
+                                startActivity(intent);
+                            }
+
+                            @Override
+                            public void onFailure(Call<Video> call, Throwable t) {
+                                Log.d("moviebla", t.getMessage().toString());
+                            }
+                        });
+                        progressDialog.dismiss();
+                    }
+
+                    @Override
+                    public void onFailure(Call<Movie> call, Throwable t) {
+                        progressDialog.dismiss();
+                        Log.d("moviebla", t.getMessage().toString());
+                    }
+                });
+            }
+        }, 3000);
     }
 
     @Override

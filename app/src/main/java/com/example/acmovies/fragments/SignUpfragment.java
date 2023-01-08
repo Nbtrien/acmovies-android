@@ -196,23 +196,23 @@ public class SignUpfragment extends Fragment {
                 {
                     Auth auth = response.body();
                     if (auth.getStatus()) {
-                        String token = auth.getToken();
-                        User user = auth.getUser();
-                        SharedPreferences userPref = getContext().getSharedPreferences("user", Context.MODE_PRIVATE);
-                        SharedPreferences.Editor editor = userPref.edit();
-                        editor.putString("token", token);
-                        editor.putInt("id", user.getId());
-                        editor.putString("name", user.getName());
-                        editor.putString("email", user.getEmail());
-                        editor.putString("avatar", user.getAvatar());
-                        editor.putBoolean("isLoggedIn", true);
-                        editor.apply();
-                        Intent intent = new Intent(getActivity(), MainActivity.class);
-                        intent.putExtra("flagFragment", "AccountFragment");
-                        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-                        startActivity(intent);
-                        getActivity().finish();
-                        progressDialog.dismiss();
+//                        String token = auth.getToken();
+//                        User user = auth.getUser();
+//                        SharedPreferences userPref = getContext().getSharedPreferences("user", Context.MODE_PRIVATE);
+//                        SharedPreferences.Editor editor = userPref.edit();
+//                        editor.putString("token", token);
+//                        editor.putInt("id", user.getId());
+//                        editor.putString("name", user.getName());
+//                        editor.putString("email", user.getEmail());
+//                        editor.putString("avatar", user.getAvatar());
+//                        editor.putBoolean("isLoggedIn", true);
+//                        editor.apply();
+//                        Intent intent = new Intent(getActivity(), MainActivity.class);
+//                        intent.putExtra("flagFragment", "AccountFragment");
+//                        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+//                        startActivity(intent);
+//                        getActivity().finish();
+//                        progressDialog.dismiss();
                     }
                 }
                 else

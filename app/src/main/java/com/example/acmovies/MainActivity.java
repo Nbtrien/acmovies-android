@@ -99,33 +99,40 @@ public class MainActivity extends AppCompatActivity {
         getSupportFragmentManager().beginTransaction().replace(R.id.fragment_main, fragment).commit();
     }
 
-    private void checkToken(){
+    private void checkToken(String token){
         DataClient dataClient = APIUtils.getData();
         Call<Status> callCheckToken = dataClient.CheckToken("Bearer " + token);
         callCheckToken.enqueue(new Callback<Status>() {
             @Override
             public void onResponse(Call<Status> call, Response<Status> response) {
-                if (response.body().getStatus()){
-                    checkAuth.setLogged(isloggedIn);
-                    User user = new User();
-                    user.setId(userPref.getInt("id", 0));
-                    user.setName(userPref.getString("name", ""));
-                    user.setEmail(userPref.getString("email", ""));
-                    user.setAvatar(userPref.getString("avatar", ""));
-                    checkAuth.setUser(user);
-                    checkAuth.setToken(userPref.getString("token", ""));
-                    Log.d("checkToken", response.body().getStatus()+" "+userPref.getString("name",""));
+                Status status = response.body();
+                Log.d("checkToken", "onResponse: "+response.code());
+                if (response.code() == 200) {
+                    if (status.getStatus()){
+                        checkAuth.setLogged(isloggedIn);
+                        User user = new User();
+                        user.setId(userPref.getInt("id", 0));
+                        user.setName(userPref.getString("name", ""));
+                        user.setEmail(userPref.getString("email", ""));
+                        user.setAvatar(userPref.getString("avatar", ""));
+                        checkAuth.setUser(user);
+                        checkAuth.setToken(userPref.getString("token", ""));
+                        Log.d("checkToken", response.body().getStatus()+" "+userPref.getString("name",""));
 
+                    } else {
+                        userPref.edit().clear().commit();
+                        Log.d("checkToken", response.body().getStatus()+" "+userPref.getString("name",""));
+                    }
                 } else {
                     userPref.edit().clear().commit();
-                    Log.d("checkToken", response.body().getStatus()+" "+userPref.getString("name",""));
+                    Log.d("checkToken", response.message()+" "+userPref.getString("name",""));
                 }
             }
 
             @Override
             public void onFailure(Call<Status> call, Throwable t) {
                 Log.d("checkToken", t.toString());
-                checkToken();
+//                checkToken();
             }
         });
     }
@@ -139,7 +146,8 @@ public class MainActivity extends AppCompatActivity {
         Intent intent =  getIntent();
         if (isloggedIn) {
             token = userPref.getString("token", "");
-            checkToken();
+            Log.d("checkToken", token);
+            checkToken(token);
         } else if (intent.hasExtra("flagFragment")) {
             String fragName = intent.getStringExtra("flagFragment");
             if (fragName.equals("AccountFragment")){

@@ -44,8 +44,10 @@ public class MyMovieRecyclerAdapter extends RecyclerView.Adapter<MyMovieRecycler
 
     @Override
     public void onBindViewHolder(@NonNull MyMovieViewHolder holder, int position) {
-        Glide.with(context).load(movieList.get(position).getCoverimage().getImageUrl()).into(holder.imgMovie);
-        holder.txtName.setText(movieList.get(position).getName());
+        Glide.with(context).load(movieList.get(position).getCoverimage()).into(holder.imgMovie);
+        String movieName = movieList.get(position).getName().substring(0, 1).toUpperCase() + movieList.get(position).getName().substring(1);
+        holder.txtName.setText(movieName);
+
         viewBinderHelper.setOpenOnlyOne(true);
         viewBinderHelper.bind(holder.swipeRevealLayout, String.valueOf(movieList.get(position)));
         viewBinderHelper.closeLayout(String.valueOf(movieList.get(position)));

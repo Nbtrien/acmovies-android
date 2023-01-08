@@ -36,8 +36,9 @@ public class SearchRecyclerAdapter extends RecyclerView.Adapter<SearchRecyclerAd
 
     @Override
     public void onBindViewHolder(@NonNull SearcViewHolder holder, int position) {
-        Glide.with(context).load(movieList.get(position).getCoverimage().getImageUrl()).into(holder.imgMovie);
-        holder.titleMovie.setText(movieList.get(position).getName());
+        Glide.with(context).load(movieList.get(position).getCoverimage()).into(holder.imgMovie);
+        String movieName = movieList.get(position).getName().substring(0, 1).toUpperCase() + movieList.get(position).getName().substring(1);
+        holder.titleMovie.setText(movieName);
     }
 
     @Override

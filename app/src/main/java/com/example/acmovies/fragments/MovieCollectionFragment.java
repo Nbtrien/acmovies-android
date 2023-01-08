@@ -1,15 +1,12 @@
 package com.example.acmovies.fragments;
 
-import android.app.ProgressDialog;
 import android.content.Intent;
 import android.os.Bundle;
-import android.os.Handler;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ProgressBar;
-import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -19,22 +16,25 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.acmovies.Interface.ItemClickListener;
-import com.example.acmovies.MovieDetailActivity;
 import com.example.acmovies.MovieListActivity;
 import com.example.acmovies.R;
 import com.example.acmovies.adapter.GenreRecyclerAdapter;
 import com.example.acmovies.adapter.MainRecyclerAdapter;
 import com.example.acmovies.model.Actor;
 import com.example.acmovies.model.Episode;
-import com.example.acmovies.model.Genres;
+import com.example.acmovies.model.Genre;
 import com.example.acmovies.model.ListMovie;
 import com.example.acmovies.model.Movie;
+import com.example.acmovies.model.Series;
+import com.example.acmovies.model.WrapperData;
 import com.example.acmovies.retrofit.APIUtils;
 import com.example.acmovies.retrofit.DataClient;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -46,7 +46,7 @@ public class MovieCollectionFragment extends Fragment implements ItemClickListen
     private RecyclerView genrerecyclerView, seriesrecyclerView;
     private GenreRecyclerAdapter recyclerAdapter;
     private MainRecyclerAdapter mainRecyclerAdapter;
-    private List<Genres> genresList;
+    private List<Genre> genresList;
     private List<ListMovie> movieList;
     private boolean mInstanceAlreadySaved;
     private Bundle mSavedOutState;
@@ -60,8 +60,8 @@ public class MovieCollectionFragment extends Fragment implements ItemClickListen
         inView();
         if (null == savedInstanceState && null != mSavedOutState) {
             savedInstanceState = mSavedOutState;
-            List<Genres> genresList1 = (List<Genres>) savedInstanceState.getSerializable("genres");
-            for (Genres genres : genresList1){
+            List<Genre> genresList1 = (List<Genre>) savedInstanceState.getSerializable("genres");
+            for (Genre genres : genresList1){
                 genresList.add(genres);
             }
 
@@ -112,14 +112,16 @@ public class MovieCollectionFragment extends Fragment implements ItemClickListen
     private void getGenres()
     {
         progressLoaddata.setVisibility(View.VISIBLE);
-        Call<List<Genres>> callAllGenre = dataClient.GetAllGenre();
-        callAllGenre.enqueue(new Callback<List<Genres>>() {
+        Map<String, String> params = new HashMap<>();
+        params.put("limit", "0");
+        Call<WrapperData<Genre>> call = dataClient.getGenres(params);
+        call.enqueue(new Callback<WrapperData<Genre>>() {
             @Override
-            public void onResponse(Call<List<Genres>> call, Response<List<Genres>> response) {
+            public void onResponse(Call<WrapperData<Genre>> call, Response<WrapperData<Genre>> response) {
                 progressLoaddata.setVisibility(View.GONE);
                 if(response.isSuccessful()) {
-                    ArrayList<Genres> list = (ArrayList<Genres>) response.body();
-                    for (Genres genre : list){
+                    ArrayList<Genre> list = (ArrayList<Genre>) response.body().getData();
+                    for (Genre genre : list){
                         genresList.add(genre);
                     }
                     recyclerAdapter.notifyDataSetChanged();
@@ -129,37 +131,55 @@ public class MovieCollectionFragment extends Fragment implements ItemClickListen
             }
 
             @Override
-            public void onFailure(Call<List<Genres>> call, Throwable t) {
-                Log.d("paginationcollect: ", t.getMessage().toString());
-                getGenres();
+            public void onFailure(Call<WrapperData<Genre>> call, Throwable t) {
+
             }
         });
     }
 
 //  Get series
     private void getSeries(){
-        Call<List<ListMovie>> callhotMovies = dataClient.GetAllSeries();
-        callhotMovies.enqueue(new Callback<List<ListMovie>>() {
+        Map<String, String> params = new HashMap<>();
+        Call<WrapperData<Series>> callSeries = dataClient.getSeries(params);
+        callSeries.enqueue(new Callback<WrapperData<Series>>() {
             @Override
-            public void onResponse(Call<List<ListMovie>> call, Response<List<ListMovie>> response) {
-                progressLoaddata.setVisibility(View.GONE);
-                if(response.isSuccessful()) {
-                    ArrayList<ListMovie> arr_cats = (ArrayList<ListMovie>) response.body();
-                    for (ListMovie listMovie : arr_cats) {
-                        movieList.add(listMovie);
+            public void onResponse(Call<WrapperData<Series>> call, Response<WrapperData<Series>> response) {
+                if (response.isSuccessful()){
+                    ArrayList<Series> seriesList = (ArrayList<Series>) response.body().getData();
+                    for (Series series : seriesList) {
+                        Call<WrapperData<Movie>> call1Movies = dataClient.getMoviesbySeries(series.getId());
+                        call1Movies.enqueue(new Callback<WrapperData<Movie>>() {
+                            @Override
+                            public void onResponse(Call<WrapperData<Movie>> call, Response<WrapperData<Movie>> response) {
+                                if(response.isSuccessful()){
+                                    ArrayList<Movie> movies = (ArrayList<Movie>) response.body().getData();
+                                    ListMovie listMovie = new ListMovie();
+                                    listMovie.setTitle(series.getName());
+                                    listMovie.setMovies(movies);
+                                    movieList.add(listMovie);
+                                    mainRecyclerAdapter.notifyDataSetChanged();
+                                } else {
+
+                                }
+                            }
+
+                            @Override
+                            public void onFailure(Call<WrapperData<Movie>> call, Throwable t) {
+
+                            }
+                        });
                     }
-                    mainRecyclerAdapter.notifyDataSetChanged();
-                } else {
-                    Log.d("paginationcollect", response.isSuccessful()+"loix");
+                }else {
+
                 }
             }
 
             @Override
-            public void onFailure(Call<List<ListMovie>> call, Throwable t) {
-                Log.d("paginationcollect: ", t.getMessage().toString());
-                getSeries();
+            public void onFailure(Call<WrapperData<Series>> call, Throwable t) {
+
             }
         });
+
     }
 
     @Override
@@ -179,6 +199,8 @@ public class MovieCollectionFragment extends Fragment implements ItemClickListen
 
     }
 
+
+
     @Override
     public void onEpisodeClick(Episode episode) {
 
@@ -190,7 +212,7 @@ public class MovieCollectionFragment extends Fragment implements ItemClickListen
     }
 
     @Override
-    public void onGenreClick(Genres genres) {
+    public void onGenreClick(Genre genres) {
         Intent intent = new Intent(getActivity(), MovieListActivity.class);
         intent.putExtra("genre", genres.getName());
         intent.putExtra("genre_id", genres.getId());

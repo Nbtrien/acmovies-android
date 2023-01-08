@@ -2,7 +2,9 @@ package com.example.acmovies.model;
 import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
 
-public class Actor {
+import java.io.Serializable;
+
+public class Actor implements Serializable {
 
     @SerializedName("id")
     @Expose

@@ -16,17 +16,17 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.bumptech.glide.Glide;
 import com.example.acmovies.Interface.ItemClickListener;
 import com.example.acmovies.R;
-import com.example.acmovies.model.Genres;
+import com.example.acmovies.model.Genre;
 
 import java.util.List;
 import java.util.Random;
 
 public class GenreRecyclerAdapter extends RecyclerView.Adapter<GenreRecyclerAdapter.GenreViewholder> {
     Context context;
-    List<Genres> genresList;
+    List<Genre> genresList;
     ItemClickListener itemClickListener;
 
-    public GenreRecyclerAdapter(Context context, List<Genres> genresList, ItemClickListener itemClickListener) {
+    public GenreRecyclerAdapter(Context context, List<Genre> genresList, ItemClickListener itemClickListener) {
         this.context = context;
         this.genresList = genresList;
         this.itemClickListener = itemClickListener;
@@ -49,7 +49,7 @@ public class GenreRecyclerAdapter extends RecyclerView.Adapter<GenreRecyclerAdap
         draw.setColor(Color.rgb(red,green,blue));
         draw.setCornerRadius(10);
 
-        holder.txt_genre.setText(genresList.get(position).getName());
+        holder.txt_genre.setText(genresList.get(position).getName().substring(0, 1).toUpperCase() + genresList.get(position).getName().substring(1));
         holder.card_genre.setBackground(draw);
         Glide.with(context).load(genresList.get(position).getImage().getImageUrl()).into(holder.img_genre);
     }

@@ -40,8 +40,10 @@ public class SliderPagerAdapter extends PagerAdapter {
         TextView sliderTxt = sliderLayout.findViewById(R.id.slide_title);
         CardView sliderCard = sliderLayout.findViewById(R.id.cardView_slide);
 
-        Glide.with(context).load(slidemovieList.get(position).getCoverimage().getImageUrl()).into(sliderImg);
-        sliderTxt.setText(slidemovieList.get(position).getName());
+        Glide.with(context).load(slidemovieList.get(position).getCoverimage()).into(sliderImg);
+
+        String movieName = slidemovieList.get(position).getName().substring(0, 1).toUpperCase() + slidemovieList.get(position).getName().substring(1);
+        sliderTxt.setText(movieName);
         container.addView(sliderLayout);
 
         sliderCard.setOnClickListener(new View.OnClickListener() {

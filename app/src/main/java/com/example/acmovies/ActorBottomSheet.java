@@ -1,6 +1,6 @@
 package com.example.acmovies;
 
-import android.app.Activity;
+import android.app.ProgressDialog;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
@@ -8,34 +8,35 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.WindowManager;
-import android.view.inputmethod.InputMethodManager;
 import android.widget.ImageButton;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
-import com.example.acmovies.Interface.DialogCloseListener;
 import com.example.acmovies.Interface.ItemClickListener;
 import com.example.acmovies.adapter.ItemRecyclerAdapter;
 import com.example.acmovies.model.Actor;
 import com.example.acmovies.model.Episode;
-import com.example.acmovies.model.Genres;
-import com.example.acmovies.model.Image;
+import com.example.acmovies.model.Genre;
 import com.example.acmovies.model.Movie;
+import com.example.acmovies.model.Video;
+import com.example.acmovies.model.WrapperData;
 import com.example.acmovies.retrofit.APIUtils;
 import com.example.acmovies.retrofit.DataClient;
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment;
 
-import org.w3c.dom.Text;
-
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import de.hdodenhof.circleimageview.CircleImageView;
 import retrofit2.Call;
@@ -76,7 +77,7 @@ public class ActorBottomSheet extends BottomSheetDialogFragment implements ItemC
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         inView();
-        getData();
+        getMovies();
     }
 
     private void inView(){
@@ -93,8 +94,18 @@ public class ActorBottomSheet extends BottomSheetDialogFragment implements ItemC
         recyclerView.setAdapter(itemRecyclerAdapter);
 
         Glide.with(getContext()).load(actor.getImage().getImageUrl()).into(imageView);
-        txtName.setText(actor.getName());
-        txtInfor.setText(actor.getBirthday()+" - "+actor.getCountry().getName());
+        txtName.setText(actor.getName().toUpperCase());
+        DateFormat parser = new SimpleDateFormat("yyyy-MM-dd");
+        DateFormat formatter = new SimpleDateFormat("dd-MM-yyyy");
+        Date convertedDate = null;
+        try {
+            convertedDate = parser.parse(actor.getBirthday());
+        } catch (ParseException e) {
+            e.printStackTrace();
+        }
+        String birthday = formatter.format(convertedDate);
+        txtInfor.setText(birthday);
+//        txtInfor.setText(actor.getBirthday()+" - "+actor.getCountry().getName());
         btnClose.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -103,51 +114,54 @@ public class ActorBottomSheet extends BottomSheetDialogFragment implements ItemC
         });
     }
 
-    private void getData() {
+    private void getMovies() {
         DataClient dataClient = APIUtils.getData();
-        Call<List<Movie>> call = dataClient.GetMoviesbyActor(actor.getId());
-        call.enqueue(new Callback<List<Movie>>() {
+        Map<String, String> params = new HashMap<>();
+        params.put("actor_id", String.valueOf(actor.getId()));
+        Call<WrapperData<Movie>> callMovies = dataClient.getMoviesbyActor(params);
+        callMovies.enqueue(new Callback<WrapperData<Movie>>() {
             @Override
-            public void onResponse(Call<List<Movie>> call, Response<List<Movie>> response) {
+            public void onResponse(Call<WrapperData<Movie>> call, Response<WrapperData<Movie>> response) {
                 if (response.isSuccessful()){
-                    ArrayList<Movie> list = (ArrayList<Movie>) response.body();
+                    ArrayList<Movie> list = (ArrayList<Movie>) response.body().getData();
                     for (Movie movie : list){
                         movieList.add(movie);
                     }
                     itemRecyclerAdapter.notifyDataSetChanged();
                 } else {
                     Log.d("ERRORMOVIEACTOR", response.isSuccessful()+"");
-                    getData();
+                    getMovies();
                 }
             }
 
             @Override
-            public void onFailure(Call<List<Movie>> call, Throwable t) {
+            public void onFailure(Call<WrapperData<Movie>> call, Throwable t) {
                 Log.d("ERRORMOVIEACTOR", t.toString());
-                getData();
+                getMovies();
             }
         });
     }
 
     @Override
     public void onMovieClick(Movie movie) {
-        DataClient dataClient = APIUtils.getData();
-        Call<Movie> callMovie = dataClient.GetMoviebyId(movie.getId());
-        callMovie.enqueue(new Callback<Movie>() {
-            @Override
-            public void onResponse(Call<Movie> call, Response<Movie> response) {
-                Movie movie = response.body();
-                Intent intent = new Intent(getContext(),MovieDetailActivity.class);
-                intent.putExtra("movie",movie);
-                getContext().startActivity(intent);
-                dismiss();
-            }
-
-            @Override
-            public void onFailure(Call<Movie> call, Throwable t) {
-                Log.d("ERROR: ", t.getMessage().toString());
-            }
-        });
+        sendtoMovieDetail(movie.getId());
+//        DataClient dataClient = APIUtils.getData();
+//        Call<Movie> callMovie = dataClient.GetMoviebyId(movie.getId());
+//        callMovie.enqueue(new Callback<Movie>() {
+//            @Override
+//            public void onResponse(Call<Movie> call, Response<Movie> response) {
+//                Movie movie = response.body();
+//                Intent intent = new Intent(getContext(),MovieDetailActivity.class);
+//                intent.putExtra("movie",movie);
+//                getContext().startActivity(intent);
+//                dismiss();
+//            }
+//
+//            @Override
+//            public void onFailure(Call<Movie> call, Throwable t) {
+//                Log.d("ERROR: ", t.getMessage().toString());
+//            }
+//        });
     }
 
     @Override
@@ -161,7 +175,53 @@ public class ActorBottomSheet extends BottomSheetDialogFragment implements ItemC
     }
 
     @Override
-    public void onGenreClick(Genres genres) {
+    public void onGenreClick(Genre genres) {
 
+    }
+
+    private void sendtoMovieDetail(Integer id)
+    {
+        final ProgressDialog progressDialog;
+        progressDialog = new ProgressDialog(getContext());
+        progressDialog.show();
+        progressDialog.setContentView(R.layout.progress_dialog);
+        progressDialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
+        DataClient dataClient = APIUtils.getData();
+
+        new Handler().postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                Call<Movie> callMovie = dataClient.getMovie(id);
+                callMovie.enqueue(new Callback<Movie>() {
+                    @Override
+                    public void onResponse(Call<Movie> call, Response<Movie> response) {
+                        Movie movie = response.body();
+                        Call<Video> callVideo = dataClient.getVideobyMovie(movie.getId());
+                        callVideo.enqueue(new Callback<Video>() {
+                            @Override
+                            public void onResponse(Call<Video> call, Response<Video> response) {
+                                Video video = response.body();
+                                Intent intent = new Intent(getActivity(), MovieDetailActivity.class);
+                                intent.putExtra("movie",movie);
+                                intent.putExtra("video",video);
+                                startActivity(intent);
+                            }
+
+                            @Override
+                            public void onFailure(Call<Video> call, Throwable t) {
+                                Log.d("moviebla", t.getMessage().toString());
+                            }
+                        });
+                        progressDialog.dismiss();
+                    }
+
+                    @Override
+                    public void onFailure(Call<Movie> call, Throwable t) {
+                        progressDialog.dismiss();
+                        Log.d("moviebla", t.getMessage().toString());
+                    }
+                });
+            }
+        }, 3000);
     }
 }

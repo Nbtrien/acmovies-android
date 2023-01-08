@@ -10,7 +10,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.example.acmovies.Interface.ItemClickListener;
 import com.example.acmovies.model.Actor;
 import com.example.acmovies.model.Episode;
-import com.example.acmovies.model.Genres;
+import com.example.acmovies.model.Genre;
 import com.example.acmovies.model.ListMovie;
 import com.example.acmovies.model.Movie;
 
@@ -47,6 +47,7 @@ public class RelatedMoviesAdapter extends RecyclerView.Adapter<RelatedMoviesAdap
 
     }
 
+
     @Override
     public void onEpisodeClick(Episode episode) {
 
@@ -58,7 +59,7 @@ public class RelatedMoviesAdapter extends RecyclerView.Adapter<RelatedMoviesAdap
     }
 
     @Override
-    public void onGenreClick(Genres genres) {
+    public void onGenreClick(Genre genres) {
 
     }
 

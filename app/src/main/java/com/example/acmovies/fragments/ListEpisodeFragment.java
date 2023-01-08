@@ -1,7 +1,9 @@
 package com.example.acmovies.fragments;
 
 import android.content.Context;
+import android.graphics.Rect;
 import android.os.Bundle;
+import android.util.DisplayMetrics;
 import android.util.Log;
 import android.util.TypedValue;
 import android.view.LayoutInflater;
@@ -20,12 +22,14 @@ import com.example.acmovies.R;
 import com.example.acmovies.adapter.EpisodeRecyclerAdapter;
 import com.example.acmovies.model.Actor;
 import com.example.acmovies.model.Episode;
-import com.example.acmovies.model.Genres;
+import com.example.acmovies.model.Genre;
 import com.example.acmovies.model.Movie;
 import com.example.acmovies.model.Video;
+import com.example.acmovies.model.WrapperData;
 import com.example.acmovies.retrofit.APIUtils;
 import com.example.acmovies.retrofit.DataClient;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import retrofit2.Call;
@@ -36,27 +40,75 @@ public class ListEpisodeFragment extends Fragment implements ItemClickListener {
     private View view;
     private RecyclerView recycler_episode;
     private EpisodeRecyclerAdapter adapter;
+    private int movieId;
     private List<Episode> episodeList;
+
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         view = inflater.inflate(R.layout.fragment_list_episode, container,false);
         Bundle bundle = getArguments();
-        episodeList = (List<Episode>) bundle.getSerializable("listep");
+        inView();
+        movieId = bundle.getInt("movieId");
+        getEpisodes();
+//        Log.d("ListEpisodeFragment", "onCreateView: "+episodeList.size());
 
+        return view;
+    }
+
+    private void inView()
+    {
+        DisplayMetrics displayMetrics = new DisplayMetrics();
+        getActivity().getWindowManager().getDefaultDisplay().getMetrics(displayMetrics);
+        int height = displayMetrics.heightPixels;
+        int width = displayMetrics.densityDpi;
+
+        Log.d("screen width", "inView: "+width);
+
+        episodeList = new ArrayList<>();
         recycler_episode = (RecyclerView) view.findViewById(R.id.recycler_list_ep);
         adapter = new EpisodeRecyclerAdapter(getContext(),episodeList,this);
         recycler_episode.setHasFixedSize(true);
-        recycler_episode.setLayoutManager(new GridAutoFitLayoutManager(getContext(),180));
-        recycler_episode.setAdapter(adapter);
 
-        return view;
+        RecyclerView.LayoutManager mLayoutManager = new GridLayoutManager(getContext(), 2);
+        recycler_episode.setLayoutManager(mLayoutManager);
+        recycler_episode.addItemDecoration(new SpacesItemDecoration(25));
+
+
+//        recycler_episode.setLayoutManager(new GridAutoFitLayoutManager(getContext(),width/2-25));
+
+        recycler_episode.setAdapter(adapter);
+    }
+
+    public void getEpisodes(){
+        DataClient dataClient = APIUtils.getData();
+        Call<WrapperData<Episode>> callEpisodes = dataClient.getEpisodesbyMovie(movieId);
+        callEpisodes.enqueue(new Callback<WrapperData<Episode>>() {
+            @Override
+            public void onResponse(Call<WrapperData<Episode>> call, Response<WrapperData<Episode>> response) {
+                if (response.isSuccessful()){
+                    for (Episode episode: response.body().getData()) {
+                        episodeList.add(episode);
+                    }
+                    adapter.notifyDataSetChanged();
+                    Log.d("ListEpisodeFragment", "onCreateView: "+episodeList.size());
+                } else {
+                    Log.d("Failed", "onResponse: "+response.errorBody());
+                }
+            }
+
+            @Override
+            public void onFailure(Call<WrapperData<Episode>> call, Throwable t) {
+                Log.d("Error", "onFailure: "+t.getMessage());
+            }
+        });
     }
 
     @Override
     public void onMovieClick(Movie movie) {
 
     }
+
 
     @Override
     public void onEpisodeClick(Episode episode) {
@@ -65,8 +117,8 @@ public class ListEpisodeFragment extends Fragment implements ItemClickListener {
         Integer video_id = episode.getVideoId();
 
         DataClient dataClient = APIUtils.getData();
-        Call<Video> callMovie = dataClient.GetVideobyId(video_id);
-        callMovie.enqueue(new Callback<Video>() {
+        Call<Video> callVideo = dataClient.getVideo(video_id);
+        callVideo.enqueue(new Callback<Video>() {
             @Override
             public void onResponse(Call<Video> call, Response<Video> response) {
                 if (response.isSuccessful()){
@@ -82,7 +134,7 @@ public class ListEpisodeFragment extends Fragment implements ItemClickListener {
 
             @Override
             public void onFailure(Call<Video> call, Throwable t) {
-                Log.d("ERROR: ", t.getMessage().toString());
+                Log.d("moviebla", t.getMessage().toString());
             }
         });
     }
@@ -93,7 +145,7 @@ public class ListEpisodeFragment extends Fragment implements ItemClickListener {
     }
 
     @Override
-    public void onGenreClick(Genres genres) {
+    public void onGenreClick(Genre genres) {
 
     }
 
@@ -148,9 +200,9 @@ public class ListEpisodeFragment extends Fragment implements ItemClickListener {
                     || mWidthChanged) {
                 int totalSpace;
                 if (getOrientation() == VERTICAL) {
-                    totalSpace = width - getPaddingRight() - getPaddingLeft();
+                    totalSpace = width - getPaddingRight() - getPaddingLeft() +25;
                 } else {
-                    totalSpace = height - getPaddingTop() - getPaddingBottom();
+                    totalSpace = height - getPaddingTop() - getPaddingBottom() +25;
                 }
                 int spanCount = Math.max(1, totalSpace / mColumnWidth);
                 setSpanCount(spanCount);
@@ -158,6 +210,21 @@ public class ListEpisodeFragment extends Fragment implements ItemClickListener {
                 mWidthChanged = false;
             }
             super.onLayoutChildren(recycler, state);
+        }
+    }
+
+    public class SpacesItemDecoration extends RecyclerView.ItemDecoration {
+        private int space;
+
+        public SpacesItemDecoration(int space) {
+            this.space = space;
+        }
+
+        @Override
+        public void getItemOffsets(Rect outRect, View view,
+                                   RecyclerView parent, RecyclerView.State state) {
+            outRect.left = space;
+            outRect.right = space;
         }
     }
 }

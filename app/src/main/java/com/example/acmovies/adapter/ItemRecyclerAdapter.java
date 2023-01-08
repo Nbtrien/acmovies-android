@@ -6,7 +6,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
@@ -38,9 +37,10 @@ public class ItemRecyclerAdapter extends RecyclerView.Adapter<ItemRecyclerAdapte
     @Override
     public void onBindViewHolder(@NonNull ItemViewHolder holder, int position)
     {
-        holder.txt_film.setText(movieList.get(position).getName());
+        String movieName = movieList.get(position).getName().substring(0, 1).toUpperCase() + movieList.get(position).getName().substring(1);
+        holder.txt_film.setText(movieName);
         if (movieList.get(position).getProfileimage() != null){
-            Glide.with(context).load(movieList.get(position).getProfileimage().getImageUrl()).into(holder.img_film);
+            Glide.with(context).load(movieList.get(position).getProfileimage()).into(holder.img_film);
         }
     }
 
