@@ -20,21 +20,23 @@ A `Movie App Android` coded in `Java Language` using `Android Studio`. Backend i
 
 ## Screenshots
 ### Home screen
-<div align="center">
+<div>
   <img src = "https://github.com/Nbtrien/acmovies-android/blob/master/app/src/main/res/drawable/ss.png" alt = "" width="200px"/>
   <img src = "https://github.com/Nbtrien/acmovies-android/blob/master/app/src/main/res/drawable/ss1.png" alt = "" width="200px"/>
   <img src = "https://github.com/Nbtrien/acmovies-android/blob/master/app/src/main/res/drawable/ss2.png" alt = "" width="200px"/>
   <img src = "https://github.com/Nbtrien/acmovies-android/blob/master/app/src/main/res/drawable/ss3.png" alt = "" width="200px"/>
 </div>
 <br/>
-<div align="center">
+### Home screen
+<div>
   <img src = "https://github.com/Nbtrien/acmovies-android/blob/master/app/src/main/res/drawable/ss10.png" alt = "" width="200px"/>
   <img src = "https://github.com/Nbtrien/acmovies-android/blob/master/app/src/main/res/drawable/ss4.png" alt = "" width="200px"/>
   <img src = "https://github.com/Nbtrien/acmovies-android/blob/master/app/src/main/res/drawable/ss11.png" alt = "" width="200px"/>
   <img src = "https://github.com/Nbtrien/acmovies-android/blob/master/app/src/main/res/drawable/ss9.png" alt = "" width="200px"/>
 </div>
 <br/>
-<div align="center">
+### Home screen
+<div>
   <img src = "https://github.com/Nbtrien/acmovies-android/blob/master/app/src/main/res/drawable/ss5.png" alt = "" width="200px"/>
   <img src = "https://github.com/Nbtrien/acmovies-android/blob/master/app/src/main/res/drawable/ss6.png" alt = "" width="200px"/>
   <img src = "https://github.com/Nbtrien/acmovies-android/blob/master/app/src/main/res/drawable/ss7.png" alt = "" width="200px"/>
