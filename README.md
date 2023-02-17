@@ -27,15 +27,15 @@ A `Movie App Android` coded in `Java Language` using `Android Studio`. Backend i
   <img src = "https://github.com/Nbtrien/acmovies-android/blob/master/app/src/main/res/drawable/ss3.png" alt = "" width="200px"/>
 </div>
 
-### Home screen
+### User screen
 <div>
   <img src = "https://github.com/Nbtrien/acmovies-android/blob/master/app/src/main/res/drawable/ss10.png" alt = "" width="200px"/>
   <img src = "https://github.com/Nbtrien/acmovies-android/blob/master/app/src/main/res/drawable/ss4.png" alt = "" width="200px"/>
   <img src = "https://github.com/Nbtrien/acmovies-android/blob/master/app/src/main/res/drawable/ss11.png" alt = "" width="200px"/>
   <img src = "https://github.com/Nbtrien/acmovies-android/blob/master/app/src/main/res/drawable/ss9.png" alt = "" width="200px"/>
 </div>
-<br/>
-### Home screen 1
+
+### Movie screen 
 <div>
   <img src = "https://github.com/Nbtrien/acmovies-android/blob/master/app/src/main/res/drawable/ss5.png" alt = "" width="200px"/>
   <img src = "https://github.com/Nbtrien/acmovies-android/blob/master/app/src/main/res/drawable/ss6.png" alt = "" width="200px"/>
