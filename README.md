@@ -19,6 +19,7 @@ A `Movie App Android` coded in `Java Language` using `Android Studio`. Backend i
 - User can `View favorite/history`.
 
 ## Screenshots
+### Home screen
 <div align="center">
   <img src = "https://github.com/Nbtrien/acmovies-android/blob/master/app/src/main/res/drawable/ss.png" alt = "" width="200px"/>
   <img src = "https://github.com/Nbtrien/acmovies-android/blob/master/app/src/main/res/drawable/ss1.png" alt = "" width="200px"/>
